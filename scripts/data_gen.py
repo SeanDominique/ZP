@@ -46,17 +46,17 @@ def generate_synthetic_data(exam: str,
         case "oxidative":
             # TODO: probably should move these schemas directly to the biomarkers.json file
             schema = {
-                # "8OH-DG": int,
+                "8OH-DG": int,
                 "SOD": int,
                 "GPx": int,
                 "CoQ10": int,
-                # "TAC": int,
-                # "Zn": int,
-                # "Cu": int,
-                # "Cu:Zn ratio": "ratio",
-                # "Se": int,
-                # "Homocysteine": int,
-                # "Anti-oxLDL IgG": int,
+                "TAC": int,
+                "Zn": int,
+                "Cu": int,
+                "Cu:Zn ratio": "ratio",
+                "Se": int,
+                "Homocysteine": int,
+                "Anti-oxLDL IgG": int,
             }
 
         case "cardiovascular":
@@ -67,7 +67,7 @@ def generate_synthetic_data(exam: str,
 
 
     for biomarker, value in schema.items():
-        biomarker_values = generate_biomarker_random_vals(n_members, exam, biomarker, value, corr = np.array([1,2]))
+        biomarker_values = generate_biomarker_random_vals(n_members, exam, biomarker, value)
         member_biomarker_samples =  pd.concat([member_biomarker_samples, biomarker_values], axis=1)
 
 
@@ -89,7 +89,7 @@ def random_date(start_date: datetime, end_date: datetime) -> str:
         return f"{date.year}-{date.month}-{date.day}"
 
 
-def generate_biomarker_random_vals(n_members: int, exam: str, biomarker: str, value: str, corr: np.array) -> pd.Series:
+def generate_biomarker_random_vals(n_members: int, exam: str, biomarker: str, value: str) -> pd.Series:
     """
     Generate a Series of random values for a given biomarker. Output format depends on type of measured biomarker.
     # TODO: fix docstring
