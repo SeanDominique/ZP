@@ -4,6 +4,7 @@ import random
 import os
 import json
 from datetime import datetime
+from sklearn.preprocessing import StandardScaler
 # import Biomarker
 
 def generate_synthetic_data(exam: str,
@@ -32,8 +33,7 @@ def generate_synthetic_data(exam: str,
     # print(checkup_dates)
 
     # Concatenate member IDs and check up date
-    member_biomarker_samples = pd.DataFrame({"CheckUp_Date": checkup_dates, "Member_IDs": member_ids})
-    print("Member + Dates")
+    member_biomarker_samples = pd.DataFrame({"Check_Up_Date": checkup_dates, "Member_ID": member_ids})
     print(member_biomarker_samples)
 
     # if biomarker_info is None:
@@ -53,7 +53,7 @@ def generate_synthetic_data(exam: str,
                 "TAC": int,
                 "Zn": int,
                 "Cu": int,
-                "Cu:Zn ratio": "ratio",
+                # "Cu:Zn ratio": "ratio",
                 "Se": int,
                 "Homocysteine": int,
                 "Anti-oxLDL IgG": int,
@@ -66,14 +66,19 @@ def generate_synthetic_data(exam: str,
             schema = {}
 
 
+    # Create random values for each biomarker
     for biomarker, value in schema.items():
         biomarker_values = generate_biomarker_random_vals(n_members, exam, biomarker, value)
         member_biomarker_samples =  pd.concat([member_biomarker_samples, biomarker_values], axis=1)
 
 
-    print(member_biomarker_samples)
+    # Apply "research-backed" correlations to randomly synthesized data
+    with open("resources/biomarkers.json", 'r') as f:
+        corr_matrix = json.load(f)[exam]["correlationMatrix"]
 
-    return
+    biomarker_values_corr = correlate_values(corr_matrix, member_biomarker_samples)
+
+    return biomarker_values_corr
 
 
 def random_date(start_date: datetime, end_date: datetime) -> str:
@@ -89,7 +94,7 @@ def random_date(start_date: datetime, end_date: datetime) -> str:
         return f"{date.year}-{date.month}-{date.day}"
 
 
-def generate_biomarker_random_vals(n_members: int, exam: str, biomarker: str, value: str) -> pd.Series:
+def generate_biomarker_random_vals(n_members: int, exam: str, biomarker: str, value: type) -> pd.Series:
     """
     Generate a Series of random values for a given biomarker. Output format depends on type of measured biomarker.
     # TODO: fix docstring
@@ -102,9 +107,10 @@ def generate_biomarker_random_vals(n_members: int, exam: str, biomarker: str, va
     member_biomarker_samples = []
 
     # get pre-researched biomarker data
-    with open("biomarkers.json", 'r') as f:
-        biomarker_data = json.load(f)[exam][biomarker]
-        print(biomarker_data)
+    with open("resources/biomarkers.json", 'r') as f:
+        exam_data = json.load(f)[exam]
+        biomarker_data = exam_data[biomarker]
+        correlation_matrix = exam_data["correlationMatrix"]
 
 
     # NOTE: probably don't need to create a biomarker class if I'm already storing all relevant statistical data for each biomarker in a JSON file
@@ -141,8 +147,57 @@ def generate_biomarker_random_vals(n_members: int, exam: str, biomarker: str, va
     return pd.Series(member_biomarker_samples, name=biomarker)
 
 
+def correlate_values(corr_matrix: np.array, data: pd.DataFrame) -> pd.DataFrame:
+    """
+
+    """
+
+    corr_matrix = np.array(corr_matrix)
+
+    temp_df = data.loc[:, ["Check_Up_Date", "Member_ID"]]
+    data.drop(columns=["Check_Up_Date", "Member_ID"], inplace= True)
+
+
+    # standardize
+    scaler = StandardScaler()
+    standardized_data = scaler.fit_transform(data)
+
+    # Validate the correlation matrix
+    if not np.allclose(corr_matrix, corr_matrix.T):
+        raise ValueError("The correlation matrix must be symmetric")
+    if not np.all(np.linalg.eigvals(corr_matrix) >= 0):
+        raise ValueError("The correlation matrix must be positive semidefinite")
+
+    # transform data to express the same correlation matrix
+    cholesky_decomp = np.linalg.cholesky(corr_matrix)
+
+    print(cholesky_decomp.shape)
+    print(cholesky_decomp)
+
+    print("======================")
+    print(corr_matrix.shape)
+    print(corr_matrix)
+
+    correlated_values = standardized_data @ cholesky_decomp.T
+
+    return pd.DataFrame(correlated_values)
+
+
+
 
 
 # EXAMPLE USAGE:
 if __name__ == "__main__":
     synth_data = generate_synthetic_data(exam="oxidative", n_members=10)
+
+    corr_synth = synth_data.corr()
+    print("corr_synth")
+    print(corr_synth)
+    print(type(synth_data.corr()))
+
+    with open("resources/biomarkers.json", 'r') as f:
+        corr_matrix = pd.DataFrame(json.load(f)["oxidative"]["correlationMatrix"])
+
+    print("-----", "corr_matrix")
+    print(corr_matrix)
+    diff = corr_matrix == corr_synth
