@@ -4,7 +4,7 @@ import os
 import logging
 from snowflake.connector.secret_detector import SecretDetector
 
-
+# Using Python's Connector (which doesn't work, atm, with GCP regional endpoints)
 logger_name = 'snowflake.connector'
 logger = logging.getLogger(logger_name)
 logger.setLevel(logging.DEBUG)
@@ -27,6 +27,7 @@ ctx = snowflake.connector.connect(
     user= os.getenv("SNOWFLAKE_USERNAME"),
     password= os.getenv("SNOWFLAKE_PASSWORD"),
     account= os.getenv("SNOWFLAKE_ACCOUNT"),
+    verify=False,
     login_timeout=120,
     network_timeout=120,
     socket_timeout=60
