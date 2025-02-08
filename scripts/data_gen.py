@@ -5,7 +5,62 @@ import os
 import json
 from datetime import datetime
 from sklearn.preprocessing import StandardScaler
+from faker import Faker
 # import Biomarker
+
+
+########## DIM TABLES ##########
+fake = Faker()
+
+### DIM_MEMBERS
+def generate_dim_members(n_members=1600, first_registered_date="2024-10-01"):
+    """
+    Generate a synthetic DIM_MEMBERS table with random:
+    - Member ID
+    - full name
+    - DOB
+    - Date registered
+    - subscription status
+    - sex
+    """
+    data = []
+    for i in range(n_members):
+        member_id = i
+        full_name = fake.name()
+        date_registered = fake.date_between(start_date=first_registered_date, end_date="today")
+        date_of_birth = fake.date_between(start_date="-60y", end_date="-20y")
+        is_active = random.choice([0, 1])
+        sex = random.choice([0,1])
+        data.append((member_id, full_name, date_registered, is_active, sex, date_of_birth))
+
+    df_members = pd.DataFrame(data, columns=["Member_ID", "Full_Name", "Date_Registered", "Is_Active", "Sex", "DOB"])
+    return df_members
+
+### DIM_CLINICIANS
+def generate_dim_clinicians(n_clinicians=20, first_onboarding_date="2023-01-17"):
+    """
+    Generate a synthetic DIM_MEMBERS table with random:
+    - Clinician ID
+    - Full Name
+    - Zoi_Onboarding_Completion_Date
+    """
+    first_onboarding_date = datetime.strptime(first_onboarding_date, "%Y-%m-%d").date()
+    data = []
+    for i in range(n_clinicians):
+        clinician_id = i
+        name = fake.name()
+        onboarding_completion_date = fake.date_between(start_date=first_onboarding_date, end_date="-2m")
+        # role = random.choice(["GP", "Cardiologist", "Neurologist", "Dietician", "Physician"])
+        data.append((clinician_id, name, onboarding_completion_date))
+
+    df_clinicians = pd.DataFrame(data, columns=["Clinician_ID", "Full_Name", "Is_Zoi_Onboarding_Complete"])
+
+    return df_clinicians
+
+
+########## FACT TABLES ##########
+
+
 
 def generate_synthetic_data(exam: str,
                             n_members= 1600,
@@ -186,5 +241,7 @@ def correlate_values(corr_matrix: np.array, data: pd.DataFrame) -> pd.DataFrame:
 
 # EXAMPLE USAGE:
 if __name__ == "__main__":
-    synth_data = generate_synthetic_data(exam="oxidative", n_members=10)
-    print(synth_data)
+    # synth_data = generate_synthetic_data(exam="oxidative", n_members=10)
+    # print(synth_data)
+    # synth_data.to_csv("synthetic_data.csv", index=False)
+    print(generate_dim_clinicians())
