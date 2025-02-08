@@ -23,6 +23,7 @@ def generate_dim_members(n_members=1600, first_registered_date="2024-10-01"):
     - subscription status
     - sex
     """
+    first_registered_date = datetime.strptime(first_registered_date, "%Y-%m-%d").date()
     data = []
     for i in range(n_members):
         member_id = i
@@ -244,4 +245,4 @@ if __name__ == "__main__":
     # synth_data = generate_synthetic_data(exam="oxidative", n_members=10)
     # print(synth_data)
     # synth_data.to_csv("synthetic_data.csv", index=False)
-    print(generate_dim_clinicians())
+    print(generate_dim_members())
