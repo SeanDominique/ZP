@@ -9,9 +9,8 @@ from faker import Faker
 # import Biomarker
 
 
-########## DIM TABLES ##########
 fake = Faker()
-
+########## DIM TABLES ##########
 ### DIM_MEMBERS
 def generate_dim_members(n_members=1600, first_registered_date="2024-10-01"):
     """
@@ -57,6 +56,99 @@ def generate_dim_clinicians(n_clinicians=20, first_onboarding_date="2023-01-17")
     df_clinicians = pd.DataFrame(data, columns=["Clinician_ID", "Full_Name", "Is_Zoi_Onboarding_Complete"])
 
     return df_clinicians
+
+### DIM_BIOMARKERS
+def generate_dim_biomarkers():
+    """
+    Generate a dataframe of biomarkers for DIM_BIOMARKERS table.
+    Biomarkers are drawn from Zoi's list of Biological Markers: (oxidative, neurotransmitters, inflammatory, etc.)
+    - Biomarker_ID
+    - Biomarker_Name
+    - Unit_Measurement
+    """
+    # TODO: create front-end to make it easy for research analysts to add new biomarkers from research papers
+
+    biomarkers_data = [
+        # Oxidative
+        ("BIO_8OH_DG",  "8OH-DG",        "ug/L"),
+        ("BIO_ANTILDL",  "Anti-LDL ox-IgG","mg/dL"),
+        ("BIO_COQ10",   "Coenzynme Q10",         "ug/mL"),
+        ("BIO_SOD",     "SOD",           "U/mL"),
+        ("BIO_GPX",     "GPx",           "U/gHb"),
+        ("BIO_ZN",      "Zn",            "umol/L"),
+        ("BIO_CU",      "Cu",            "umol/L"),
+        ("BIO_SE",      "Se",            "ug/L"),
+        ("BIO_HCY",     "Homocystein",  "umol/L"),
+        ("BIO_TAC",     "Total Antioxidant Capacity",           "mmol/L"),
+
+        # Neurotransmitters
+        ("BIO_DOP",      "Dopamine",                                        "nmol/L"),
+        ("BIO_3_4DOPAC", "3,4-Dihydroxyphenylacetic acid (3,4 DOPAC)",       "nmol/L"),
+        ("BIO_HVA",      "Homovanillic acid (HVA)",                          "nmol/L"),
+        ("BIO_MHPG",     "Methoxy-4-hydroxyphenylglycol (MHPG)",             "nmol/L"),
+        ("BIO_VMA",      "Vanillylmandelic acid (VMA)",                      "nmol/L"),
+        ("BIO_SER",      "Serotonin",                                        "nmol/L"),
+        ("BIO_5_HIAA",   "5-Hydroxyindoleacetic acid (5-HIAA)",              "nmol/L"),
+        ("BIO_ADR",      "Adrenaline (Epinephrine)",                         "nmol/L"),
+        ("BIO_NADR",     "Noradrenaline (Norepinephrine)",                   "nmol/L"),
+
+        # Inflammatory & Protein workup
+        ("BIO_TP",       "Total proteins",                                   "g/L"),
+        ("BIO_A1G",      "Alpha-1 globulins",                                "g/L"),
+        ("BIO_A2G",      "Alpha-2 globulins",                                "g/L"),
+        ("BIO_BG",       "Beta globulins",                                   "g/L"),
+        ("BIO_GG",       "Gamma globulins",                                  "g/L"),
+        ("BIO_ALB",      "Albumin",                                          "g/L"),
+        ("BIO_CRP",      "Ultra-sensitive C-reactive Protein (CRP)",         "mg/L"),
+        ("BIO_SUPAR",    "Soluble urokinase plasminogen activator receptor (suPAR)", "ng/mL"),
+        ("BIO_HA",       "Hyaluronic acid",                                  "ng/mL"),
+    ]
+    df = pd.DataFrame(
+        biomarkers_data,
+        columns=["Biomarker_ID","Biomarker_Name","Unit_Measurement"]
+    )
+    return df
+
+### DIM_DISEASE_PROFILES
+def generate_dim_disease_profiles():
+    """
+    Generate a small list of common disease profiles for DIM_DISEASE_PROFILES table.
+    - Disease_Profile_ID
+    - Name
+    - Last_Reviewed
+    """
+    # In reality, you’d have a bigger or more clinically rich list
+    profiles = [
+        {"disease_profile_id":"DIS_001", "name":"Metabolic Syndrome", "last_reviewed":"2024-01-10"},
+        {"disease_profile_id":"DIS_002", "name":"Neurodegenerative Risk", "last_reviewed":"2023-11-05"},
+        {"disease_profile_id":"DIS_003", "name":"Oxidative Stress Risk", "last_reviewed":"2023-08-21"},
+        {"disease_profile_id":"DIS_004", "name":"Cardiovascular Risk", "last_reviewed":"2023-05-15"},
+        {"disease_profile_id":"DIS_005", "name":"Parkinson's Disease", "last_reviewed":"2023-03-20"},
+        {"disease_profile_id":"DIS_006", "name":"Coronary Artery Disease", "last_reviewed":"2023-02-14"},
+        {"disease_profile_id":"DIS_007", "name":"Chronic Liver Disease", "last_reviewed":"2023-01-30"},
+        {"disease_profile_id":"DIS_008", "name":"Major Depressive Disorder", "last_reviewed":"2022-12-05"}
+    ]
+    df = pd.DataFrame(profiles)
+    return df.rename(columns={"disease_profile_id":"Disease_Profile_ID", "last_reviewed":"Last_Reviewed", "name":"Disease_Profile_Name"})
+
+### DIM_MEDICAL_DEVICES
+def generate_dim_medical_devices():
+    """
+    Generate a dataframe of medical devices for DIM_MEDICAL_DEVICES table.
+    - Medical_Device_ID
+    - Name
+    - Last_Service_Date
+    - Purchased_Date
+    """
+
+    devices = [
+        {"Medical_Device_ID": "DEV_LC_003", "Name": "LC-MS Biomarker System", "Last_Serviced_Date": "2023-12-01", "Purchased_Date": "2021-09-18"},
+        {"Medical_Device_ID": "DEV_ELISA_002", "Name": "Automated ELISA Analyzer", "Last_Serviced_Date": "2023-11-15", "Purchased_Date": "2020-06-12"},
+        {"Medical_Device_ID": "DEV_CC_001", "Name": "Automated Clinical Chemistry Analyzer", "Last_Serviced_Date": "2023-10-20", "Purchased_Date": "2019-04-05"},
+        {"Medical_Device_ID": "DEV_HPLC_004", "Name": "HPLC with Electrochemical Detection System", "Last_Serviced_Date": "2023-09-30", "Purchased_Date": "2022-01-25"},
+        {"Medical_Device_ID": "DEV_ICP_005", "Name": "ICP-MS Trace Element Analyzer", "Last_Serviced_Date": "2023-08-10", "Purchased_Date": "2020-11-02"}
+    ]
+    return pd.DataFrame(devices)
 
 
 ########## FACT TABLES ##########
@@ -247,20 +339,40 @@ if __name__ == "__main__":
     # DIM Tables
     df_members = generate_dim_members()
     df_clinicians = generate_dim_clinicians()
+    df_biomarkers = generate_dim_biomarkers()
+    df_medical_devices = generate_dim_medical_devices()
+    df_disease_profiles = generate_dim_disease_profiles()
+
+    # FACT Tables
+
 
     current_dir = os.path.dirname(os.path.abspath(__file__))
-
     output_dir = os.path.join(current_dir, "..", "data2", "synthetic")
     absolute_output_dir = os.path.abspath(output_dir)
 
-    print("The absolute path to the data2/synthetic folder is:", absolute_output_dir)
 
-    print("df_members")
-    print(df_members)
-    df_members.to_csv(output_dir + "/dim_members.csv", index=False)
+    # View synthetic data and save to CSV
 
-    print("df_clinicians")
-    print(df_clinicians)
-    df_clinicians.to_csv(output_dir + "/dim_clinicians.csv", index=False)
+    # DIM Tables
 
-    # # FACT Tables
+    # print("df_members")
+    # print(df_members)
+    # df_members.to_csv(output_dir + "/dim_members.csv", index=False)
+
+    # print("df_clinicians")
+    # print(df_clinicians)
+    # df_clinicians.to_csv(output_dir + "/dim_clinicians.csv", index=False)
+
+    # print("df_biomarkers")
+    # print(df_biomarkers)
+    # df_biomarkers.to_csv(output_dir + "/dim_biomarkers.csv", index=False)
+
+    print("df_medical_devices")
+    print(df_medical_devices)
+    df_medical_devices.to_csv(output_dir + "/dim_medical_devices.csv", index=False)
+
+    print("df_disease_profiles")
+    print(df_disease_profiles)
+    df_disease_profiles.to_csv(output_dir + "/dim_disease_profiles.csv", index=False)
+
+    # FACT Tables
