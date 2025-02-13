@@ -61,8 +61,6 @@ def generate_dim_clinicians(n_clinicians=20, first_onboarding_date="2023-01-17")
 
 ########## FACT TABLES ##########
 
-
-
 def generate_synthetic_data(exam: str,
                             n_members= 1600,
                             start_date= "2024-10-01"):
@@ -245,4 +243,24 @@ if __name__ == "__main__":
     # synth_data = generate_synthetic_data(exam="oxidative", n_members=10)
     # print(synth_data)
     # synth_data.to_csv("synthetic_data.csv", index=False)
-    print(generate_dim_members())
+
+    # DIM Tables
+    df_members = generate_dim_members()
+    df_clinicians = generate_dim_clinicians()
+
+    current_dir = os.path.dirname(os.path.abspath(__file__))
+
+    output_dir = os.path.join(current_dir, "..", "data2", "synthetic")
+    absolute_output_dir = os.path.abspath(output_dir)
+
+    print("The absolute path to the data2/synthetic folder is:", absolute_output_dir)
+
+    print("df_members")
+    print(df_members)
+    df_members.to_csv(output_dir + "/dim_members.csv", index=False)
+
+    print("df_clinicians")
+    print(df_clinicians)
+    df_clinicians.to_csv(output_dir + "/dim_clinicians.csv", index=False)
+
+    # # FACT Tables
