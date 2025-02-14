@@ -7,6 +7,7 @@ from datetime import datetime
 from sklearn.preprocessing import StandardScaler
 from faker import Faker
 # import Biomarker
+import matplotlib.pyplot as plt
 
 
 fake = Faker()
@@ -152,7 +153,72 @@ def generate_dim_medical_devices():
 
 
 ########## FACT TABLES ##########
+def generate_fact_examinations(n_exams=1600):
+    """
+    Generate a dataframe of examinations for FACT_EXAMINATIONS table.
+    - Examination_ID
+    - Member_ID
+    - Examination_Date
+    - Clinician_ID
 
+    Note: n=2000 examinations done assumes 1600 members with a 75% churn rate
+    """
+
+    df_members = pd.read_csv("data2/synthetic/dim_members.csv")
+    df_clinicians = pd.read_csv("data2/synthetic/dim_clinicians.csv")
+
+    df_members.sort_values(by="Date_Registered", inplace=True)
+
+
+    examinations = []
+    for i in range(n_exams):
+        sample_member = df_members.iloc[i]
+
+        # TODO: add a second examination for certain members (when the earliest member registered date is >1 y.o)
+        if i > len(df_members):
+            # sample random Member_ID provided they are active
+
+            # select random date 1+ year after their last exam date
+            pass
+
+        # generate random exam date within a month of Date_Registered
+        sample_member_onboarding_date = datetime.strptime(sample_member["Date_Registered"], "%Y-%m-%d").date()
+        examination_date = fake.date_between(start_date=sample_member_onboarding_date, end_date="+1m")
+
+        # get sampled member's ID
+        member_id =sample_member["Member_ID"]
+
+        # get random clinician from df_clinicians provided they have completed onboarding before the examination date
+        random_clinician = df_clinicians.sample(n=1)
+        random_clinician_onboarding_date = datetime.strptime(random_clinician.iloc[0]["Is_Zoi_Onboarding_Complete"], "%Y-%m-%d").date()
+        while random_clinician_onboarding_date > examination_date:
+            random_clinician = df_clinicians.sample(n=1)
+            random_clinician_onboarding_date = datetime.strptime(random_clinician.iloc[0]["Is_Zoi_Onboarding_Complete"], "%Y-%m-%d").date()
+
+        examinations.append((member_id, examination_date, random_clinician.iloc[0]["Clinician_ID"]))
+
+
+
+    df_examinations = pd.DataFrame(examinations, columns=["Member_ID", "Examination_Date", "Clinician_ID"])
+    df_examinations.sort_values(by="Examination_Date", inplace=True)
+
+    examination_ids = [f"EXAM_{i+1:04d}" for i in range(len(df_examinations))]
+    df_examinations.insert(0, "Examination_ID", examination_ids)
+
+    return df_examinations
+
+
+def generate_fact_data_collected():
+    """
+    Generate a dataframe of data collected for FACT_DATA_COLLECTED table.
+    - Data_Collected_ID
+    - Examination_ID
+    - Biomarker_ID
+    - Value
+    """
+    pass
+
+#################################
 def generate_synthetic_data(exam: str,
                             n_members= 1600,
                             start_date= "2024-10-01"):
@@ -344,7 +410,7 @@ if __name__ == "__main__":
     df_disease_profiles = generate_dim_disease_profiles()
 
     # FACT Tables
-
+    df_examinations = generate_fact_examinations()
 
     current_dir = os.path.dirname(os.path.abspath(__file__))
     output_dir = os.path.join(current_dir, "..", "data2", "synthetic")
@@ -353,7 +419,7 @@ if __name__ == "__main__":
 
     # View synthetic data and save to CSV
 
-    # DIM Tables
+    ### DIM Tables ###
 
     # print("df_members")
     # print(df_members)
@@ -367,12 +433,16 @@ if __name__ == "__main__":
     # print(df_biomarkers)
     # df_biomarkers.to_csv(output_dir + "/dim_biomarkers.csv", index=False)
 
-    print("df_medical_devices")
-    print(df_medical_devices)
-    df_medical_devices.to_csv(output_dir + "/dim_medical_devices.csv", index=False)
+    # print("df_medical_devices")
+    # print(df_medical_devices)
+    # df_medical_devices.to_csv(output_dir + "/dim_medical_devices.csv", index=False)
 
-    print("df_disease_profiles")
-    print(df_disease_profiles)
-    df_disease_profiles.to_csv(output_dir + "/dim_disease_profiles.csv", index=False)
+    # print("df_disease_profiles")
+    # print(df_disease_profiles)
+    # df_disease_profiles.to_csv(output_dir + "/dim_disease_profiles.csv", index=False)
 
-    # FACT Tables
+    ### FACT Tables ###
+    # print(df_examinations)
+    # df_examinations.to_csv(output_dir + "/fact_examinations.csv", index=False)
+    # df_examinations.hist(column="Clinician_ID", bins=20, figsize=(10, 10))
+    # plt.show()
