@@ -9,6 +9,81 @@ from faker import Faker
 # import Biomarker
 import matplotlib.pyplot as plt
 
+### CONSTANTS
+BIOMARKER_TO_DEVICE = {
+    "BIO_8OH_DG": "DEV_LC_003",
+    "BIO_ANTILDL": "DEV_ELISA_002",
+    "BIO_COQ10": "DEV_LC_003",
+    "BIO_SOD": "DEV_CC_001",
+    "BIO_GPX": "DEV_CC_001",
+    "BIO_ZN": "DEV_ICP_005",
+    "BIO_CU": "DEV_ICP_005",
+    "BIO_SE": "DEV_ICP_005",
+    "BIO_HCY": "DEV_CC_001",
+    "BIO_TAC": "DEV_CC_001",
+    "BIO_DOP": "DEV_LC_003",
+    "BIO_3_4DOPAC": "DEV_LC_003",
+    "BIO_HVA": "DEV_HPLC_004",
+    "BIO_MHPG": "DEV_HPLC_004",
+    "BIO_VMA": "DEV_HPLC_004",
+    "BIO_SER": "DEV_LC_003",
+    "BIO_5_HIAA": "DEV_LC_003",
+    "BIO_ADR": "DEV_HPLC_004",
+    "BIO_NADR": "DEV_HPLC_004",
+    "BIO_TP": "DEV_CC_001",
+    "BIO_A1G": "DEV_CC_001",
+    "BIO_A2G": "DEV_CC_001",
+    "BIO_BG": "DEV_CC_001",
+    "BIO_GG": "DEV_CC_001",
+    "BIO_ALB": "DEV_CC_001",
+    "BIO_CRP": "DEV_ELISA_002",
+    "BIO_SUPAR": "DEV_ELISA_002",
+    "BIO_HA": "DEV_ELISA_002"
+}
+
+
+# TODO: should pull this data from a database of researched biomarker data from research papers / clinicial studies
+# Define realistic ranges for each biomarker (example ranges)
+BIOMARKER_PARAMS = {
+    # Oxidative biomarkers
+    "BIO_8OH_DG": {"mean": 2.5, "std_dev": 0.8},          # 8OH-DG in ug/L
+    "BIO_ANTILDL": {"mean": 5.0, "std_dev": 1.5},           # Anti-LDL ox-IgG in mg/dL
+    "BIO_COQ10": {"mean": 1.5, "std_dev": 0.4},             # Coenzyme Q10 in ug/mL
+    "BIO_SOD": {"mean": 100, "std_dev": 20},                # SOD in U/mL
+    "BIO_GPX": {"mean": 50, "std_dev": 10},                 # GPx in U/gHb
+    "BIO_ZN": {"mean": 18, "std_dev": 2.5},                 # Zn in umol/L
+    "BIO_CU": {"mean": 20, "std_dev": 3},                   # Cu in umol/L
+    "BIO_SE": {"mean": 110, "std_dev": 15},                 # Se in ug/L
+    "BIO_HCY": {"mean": 10, "std_dev": 2},                  # Homocystein in umol/L
+    "BIO_TAC": {"mean": 1.0, "std_dev": 0.2},               # Total Antioxidant Capacity in mmol/L
+
+    # Neurotransmitters
+    "BIO_DOP": {"mean": 1.0, "std_dev": 0.3},               # Dopamine in nmol/L
+    "BIO_3_4DOPAC": {"mean": 1.2, "std_dev": 0.4},          # 3,4-DOPAC in nmol/L
+    "BIO_HVA": {"mean": 1.0, "std_dev": 0.3},               # HVA in nmol/L
+    "BIO_MHPG": {"mean": 1.5, "std_dev": 0.5},              # MHPG in nmol/L
+    "BIO_VMA": {"mean": 5.0, "std_dev": 1.5},               # VMA in nmol/L
+    "BIO_SER": {"mean": 200, "std_dev": 50},                # Serotonin in nmol/L
+    "BIO_5_HIAA": {"mean": 3.0, "std_dev": 1.0},            # 5-HIAA in nmol/L
+    "BIO_ADR": {"mean": 0.5, "std_dev": 0.2},               # Adrenaline in nmol/L
+    "BIO_NADR": {"mean": 2.0, "std_dev": 0.5},              # Noradrenaline in nmol/L
+
+    # Inflammatory & Protein Workup
+    "BIO_TP": {"mean": 70, "std_dev": 5},                 # Total proteins in g/L
+    "BIO_A1G": {"mean": 1.5, "std_dev": 0.3},             # Alpha-1 globulins in g/L
+    "BIO_A2G": {"mean": 2.0, "std_dev": 0.5},             # Alpha-2 globulins in g/L
+    "BIO_BG": {"mean": 2.5, "std_dev": 0.4},              # Beta globulins in g/L
+    "BIO_GG": {"mean": 1.0, "std_dev": 0.3},              # Gamma globulins in g/L
+    "BIO_ALB": {"mean": 42, "std_dev": 3},                # Albumin in g/L
+    "BIO_CRP": {"mean": 2.0, "std_dev": 1.0},             # CRP in mg/L
+    "BIO_SUPAR": {"mean": 4.0, "std_dev": 1.0},           # suPAR in ng/mL
+    "BIO_HA": {"mean": 100, "std_dev": 30}                # Hyaluronic acid in ng/mL
+}
+
+
+#########################
+
+
 
 fake = Faker()
 ########## DIM TABLES ##########
@@ -102,7 +177,7 @@ def generate_dim_biomarkers():
         ("BIO_ALB",      "Albumin",                                          "g/L"),
         ("BIO_CRP",      "Ultra-sensitive C-reactive Protein (CRP)",         "mg/L"),
         ("BIO_SUPAR",    "Soluble urokinase plasminogen activator receptor (suPAR)", "ng/mL"),
-        ("BIO_HA",       "Hyaluronic acid",                                  "ng/mL"),
+        ("BIO_HA",       "Hyaluronic acid",                                  "ng/mL")
     ]
     df = pd.DataFrame(
         biomarkers_data,
@@ -207,18 +282,53 @@ def generate_fact_examinations(n_exams=1600):
 
     return df_examinations
 
-
 def generate_fact_data_collected():
     """
     Generate a dataframe of data collected for FACT_DATA_COLLECTED table.
     - Data_Collected_ID
     - Examination_ID
     - Biomarker_ID
+    - Medical_Device_ID
     - Value
     """
-    pass
+
+    df_examinations = pd.read_csv("data2/synthetic/fact_examinations.csv")
+    df_biomarkers = pd.read_csv("data2/synthetic/dim_biomarkers.csv")
+
+    unique_data_collected_ids = [f"DATA_{i+1:04d}" for i in range(len(df_examinations) * len(df_biomarkers))]
+
+    data_collected = []
+
+    i = 0
+    for _, examination in df_examinations.iterrows():
+        for _, biomarker in df_biomarkers.iterrows():
+
+            biomarker_id = biomarker["Biomarker_ID"]
+
+            # what medical_device_id is associated with this biomarker?
+            # note: normally the medical device making the measurement would be recorded when the biomarker values is recorded
+            medical_device_id = BIOMARKER_TO_DEVICE[biomarker_id]
+
+            # what is the value of this biomarker?
+            biomarker_value = generate_biomarker_value(biomarker_id)
+
+            data_collected.append((unique_data_collected_ids[i], examination["Examination_ID"], biomarker_id, medical_device_id, biomarker_value))
+            i+=1
+
+    return pd.DataFrame(data_collected, columns=["Data_Collected_ID", "Examination_ID", "Biomarker_ID", "Medical_Device_ID", "Value"])
 
 #################################
+def generate_biomarker_value(biomarker_id):
+    """Generates a random value for a given biomarker based on its statistical parameters from `BIOMARKER_PARAMS`."""
+
+    if biomarker_id in BIOMARKER_PARAMS:
+        params = BIOMARKER_PARAMS[biomarker_id]
+        # assumes normal distribution - in reality, human omics data exhibits kurtosis and skewness
+        return np.random.normal(params["mean"], params["std_dev"])
+    else:
+        raise ValueError(f"Biomarker {biomarker_id} parameters are not defined.")
+
+
 def generate_synthetic_data(exam: str,
                             n_members= 1600,
                             start_date= "2024-10-01"):
@@ -291,7 +401,6 @@ def generate_synthetic_data(exam: str,
 
     return member_biomarker_samples
 
-
 def random_date(start_date: datetime, end_date: datetime) -> str:
         """
         Create a random date between two given input dates
@@ -303,7 +412,6 @@ def random_date(start_date: datetime, end_date: datetime) -> str:
         random_days = random.randrange(days_between)
         date = start + pd.Timedelta(days=random_days)
         return f"{date.year}-{date.month}-{date.day}"
-
 
 def generate_biomarker_random_vals(n_members: int, exam: str, biomarker: str, value: type) -> pd.Series:
     """
@@ -357,7 +465,6 @@ def generate_biomarker_random_vals(n_members: int, exam: str, biomarker: str, va
 
     return pd.Series(member_biomarker_samples, name=biomarker)
 
-
 def correlate_values(corr_matrix: np.array, data: pd.DataFrame) -> pd.DataFrame:
     """
     # TODO: Doesn't work
@@ -394,8 +501,6 @@ def correlate_values(corr_matrix: np.array, data: pd.DataFrame) -> pd.DataFrame:
 
 
 
-
-
 # EXAMPLE USAGE:
 if __name__ == "__main__":
     # synth_data = generate_synthetic_data(exam="oxidative", n_members=10)
@@ -411,6 +516,7 @@ if __name__ == "__main__":
 
     # FACT Tables
     df_examinations = generate_fact_examinations()
+    df_data_collected = generate_fact_data_collected()
 
     current_dir = os.path.dirname(os.path.abspath(__file__))
     output_dir = os.path.join(current_dir, "..", "data2", "synthetic")
@@ -445,4 +551,9 @@ if __name__ == "__main__":
     # print(df_examinations)
     # df_examinations.to_csv(output_dir + "/fact_examinations.csv", index=False)
     # df_examinations.hist(column="Clinician_ID", bins=20, figsize=(10, 10))
+    # plt.show()
+
+    # print(df_data_collected)
+    # df_data_collected.to_csv(output_dir + "/fact_data_collected.csv", index=False)
+    # df_data_collected.hist(column="Value", by="Biomarker_ID", figsize=(10, 10))
     # plt.show()
