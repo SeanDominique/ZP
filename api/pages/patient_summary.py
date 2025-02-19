@@ -34,17 +34,15 @@ df_data['Examination_Date'] = pd.to_datetime(df_data['Examination_Date'])
 st.title("⚕️ Member Summary")
 
 col1, col2 = st.columns(2)
-
-# select a specific patient (search by name)
-# TODO: change to select by patient ID in case duplicate names
 with col1:
+    # select a specific patient (search by name)
+    # TODO: change to select by patient ID in case duplicate names
     st.subheader("Member info")
     member_name = st.text_input("Enter member name:")
 
 with col2:
-    st.subheader("Clinician info")
-
     # TODO: select clinician to filter by based on login
+    st.subheader("Clinician info")
     clinician_name = st.selectbox(
         "Which clinician are you?",
         df_clinicians["Full_Name"].values,
@@ -53,7 +51,7 @@ with col2:
     )
 
 if clinician_name:
-    # TODO: filter my clinician_ID if clinician's have the same name
+    # TODO: filter my clinician_ID if multiple clinicians have the same name
     clinician_id = df_clinicians[df_clinicians["Full_Name"] == clinician_name]["Clinician_ID"].iloc[0]
     df_data = df_data[df_data["Clinician_ID"] == clinician_id]
 
@@ -66,16 +64,16 @@ if member_name in df_members["Full_Name"].values:
     st.markdown(f"*{member_name}* most recent record: ")
     st.write(member_record)
 
-    # GET all the biomarker data from the associated examination_ID and plot  for each biomarker
 
-    # Create boxplots for all member values
+    # For each biomarker, create a boxplot showing the distribution of values for all members
     fig = go.Figure()
 
     biomarkers = df_biomarkers["Biomarker_ID"].to_list()
     for biomarker_ID in biomarkers:
-        # Filter data for this biomarker
+
         biomarker_data = df_data[df_data["Biomarker_ID"] == biomarker_ID]
 
+        # Display the distribution of values for all members
         fig.add_trace(go.Box(
             y=biomarker_data["Value"],
             name=biomarker_ID,
