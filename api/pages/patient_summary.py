@@ -9,9 +9,10 @@ df_members = pd.read_csv("data2/synthetic/dim_members.csv")
 df_examinations = pd.read_csv("data2/synthetic/fact_examinations.csv")
 df_biomarkers = pd.read_csv("data2/synthetic/dim_biomarkers.csv")
 df_data_collected = pd.read_csv("data2/synthetic/fact_data_collected.csv")
+df_clinicians = pd.read_csv("data2/synthetic/dim_clinicians.csv")
 
 df_data = (df_data_collected
-    .merge(df_examinations[['Examination_ID', 'Member_ID', 'Examination_Date']],
+    .merge(df_examinations[['Examination_ID', 'Member_ID', 'Examination_Date', "Clinician_ID"]],
            on='Examination_ID', how='left')
     .merge(df_members[['Member_ID', 'Full_Name']],
            on='Member_ID', how='left')
@@ -19,7 +20,7 @@ df_data = (df_data_collected
            on='Biomarker_ID', how='left'))
 
 # Reorder columns
-df_data = df_data.loc[:, ["Examination_Date", "Member_ID", "Full_Name", "Biomarker_Name", "Value", "Unit_Measurement", "Biomarker_ID", "Examination_ID"]] # "DOB", "Sex", "Is_Active", "Registered_Date",
+df_data= df_data.loc[:, ["Examination_Date", "Member_ID", "Full_Name", "Biomarker_Name", "Value", "Unit_Measurement", "Biomarker_ID", "Examination_ID", "Clinician_ID"]] # "DOB", "Sex", "Is_Active", "Registered_Date",
 
 # st.write(df_members__examinations.groupby(by="Full_Name").count()) # -> any dupes??
 
@@ -32,9 +33,29 @@ df_data['Examination_Date'] = pd.to_datetime(df_data['Examination_Date'])
 ########## APP
 st.title("⚕️ Member Summary")
 
+col1, col2 = st.columns(2)
+
 # select a specific patient (search by name)
 # TODO: change to select by patient ID in case duplicate names
-member_name = st.text_input("Enter patient name:")
+with col1:
+    st.subheader("Member info")
+    member_name = st.text_input("Enter member name:")
+
+with col2:
+    st.subheader("Clinician info")
+
+    # TODO: select clinician to filter by based on login
+    clinician_name = st.selectbox(
+        "Which clinician are you?",
+        df_clinicians["Full_Name"].values,
+        index=None,
+        placeholder="Select contact method...",
+    )
+
+if clinician_name:
+    # TODO: filter my clinician_ID if clinician's have the same name
+    clinician_id = df_clinicians[df_clinicians["Full_Name"] == clinician_name]["Clinician_ID"].iloc[0]
+    df_data = df_data[df_data["Clinician_ID"] == clinician_id]
 
 if member_name in df_members["Full_Name"].values:
     member_record = df_data[df_data["Full_Name"] == member_name]
@@ -42,7 +63,8 @@ if member_name in df_members["Full_Name"].values:
     # Get member's most recent examination data
     if len(member_record) > 1:
         member_record = member_record[member_record["Examination_Date"] == member_record["Examination_Date"].max()]
-    st.write(f"{member_name} most recent record: ", member_record)
+    st.markdown(f"*{member_name}* most recent record: ")
+    st.write(member_record)
 
     # GET all the biomarker data from the associated examination_ID and plot  for each biomarker
 
@@ -74,7 +96,7 @@ if member_name in df_members["Full_Name"].values:
 
     # Update layout
     fig.update_layout(
-        title="Biomarker distribution of all members with member's most recent measurement",
+        title=f"Biomarker distribution of all members with {member_name}'s most recent measurement",
         yaxis_title="Value",
         height=600,
         showlegend=False,
