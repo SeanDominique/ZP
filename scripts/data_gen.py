@@ -226,6 +226,21 @@ def generate_dim_medical_devices():
     ]
     return pd.DataFrame(devices)
 
+### DIM_RESEARCH_STUDIES
+def generate_dim_research_studies():
+    """
+    Generate a dataframe of research studies for DIM_RESEARCH_STUDIES table.
+    - Research_Study_ID
+    - URI
+    - Disease_Profile_ID
+    """
+
+    # TODO: add more research studies OR just create a feature in "Researcher Portal of streamlit app to easily add research papers and relevant biomarker values"
+    research_study_ids = "REAS_0001"
+    uri = "https://doi.org/10.3390/biomedicines10071760" # random
+    disease_profile_id = "DIS_002" # random, maps to Neurodegenerative Risk
+
+    return pd.DataFrame([{"Research_Study_ID": research_study_ids, "URI": uri, "Disease_Profile_ID": disease_profile_id}])
 
 ########## FACT TABLES ##########
 def generate_fact_examinations(n_exams=1600):
@@ -317,6 +332,39 @@ def generate_fact_data_collected():
 
     return pd.DataFrame(data_collected, columns=["Data_Collected_ID", "Examination_ID", "Biomarker_ID", "Medical_Device_ID", "Value"])
 
+def generate_fact_research_results_values():
+    """
+    Generate a dataframe of research results for FACT_RESEARCH_RESULTS table.
+    - Research_Result_ID
+    - Upper_Limit
+    - Lower_Limit
+    - Population_Size
+    - P_Value
+    - Confidence_Score
+    - Biomarker_ID
+    - Research_Study_ID
+    """
+    # TODO: currently only defined for 1 research study
+
+    df_biomarkers = pd.read_csv("data2/synthetic/dim_biomarkers.csv")
+
+    population_size = random.randint(100, 10000)
+    p_value = random.uniform(0, 1)
+    confidence_score = random.randint(0, 100) # assuming we have the confidence score is for the entire research study, not for each biomarker
+    research_study_id = "REAS_0001"
+
+    research_results = []
+
+    i=1
+    for biomarker_id in df_biomarkers["Biomarker_ID"]:
+        research_result_id = f"R_RESULTS_{i:04d}"
+        upper_limit, lower_limit = generate_biomarker_healthy_range(biomarker_id)
+
+        research_results.append((research_result_id, upper_limit, lower_limit, population_size, p_value, confidence_score, biomarker_id, research_study_id))
+        i+=1
+
+    return pd.DataFrame(research_results, columns=["Research_Result_ID", "Upper_Limit", "Lower_Limit", "Population_Size", "P_Value", "Confidence_Score", "Biomarker_ID", "Research_Study_ID"])
+
 #################################
 def generate_biomarker_value(biomarker_id):
     """Generates a random value for a given biomarker based on its statistical parameters from `BIOMARKER_PARAMS`."""
@@ -325,6 +373,28 @@ def generate_biomarker_value(biomarker_id):
         params = BIOMARKER_PARAMS[biomarker_id]
         # assumes normal distribution - in reality, human omics data exhibits kurtosis and skewness
         return np.random.normal(params["mean"], params["std_dev"])
+    else:
+        raise ValueError(f"Biomarker {biomarker_id} parameters are not defined.")
+
+
+def generate_biomarker_healthy_range(biomarker_id):
+    """Generates a random "healthy range" (ie. upper and lower thresholds) for a given biomarker based on its statistical parameters from `BIOMARKER_PARAMS`."""
+
+    if biomarker_id in BIOMARKER_PARAMS:
+        mean = BIOMARKER_PARAMS[biomarker_id]["mean"]
+        std_dev = BIOMARKER_PARAMS[biomarker_id]["std_dev"]
+
+        upper_range_a, upper_range_b = mean + 1.5 * std_dev, mean + 2.5 * std_dev
+        lower_range_a, lower_range_b = mean - 2.5 * std_dev, mean - 1.5 * std_dev
+
+        upper_limit = random.uniform(upper_range_a, upper_range_b)
+        lower_limit = random.uniform(lower_range_a, lower_range_b)
+
+        if upper_limit < lower_limit:
+            upper_limit, lower_limit = lower_limit, upper_limit
+
+        return upper_limit, lower_limit
+
     else:
         raise ValueError(f"Biomarker {biomarker_id} parameters are not defined.")
 
@@ -513,10 +583,12 @@ if __name__ == "__main__":
     df_biomarkers = generate_dim_biomarkers()
     df_medical_devices = generate_dim_medical_devices()
     df_disease_profiles = generate_dim_disease_profiles()
+    df_research_studies = generate_dim_research_studies()
 
     # FACT Tables
     df_examinations = generate_fact_examinations()
     df_data_collected = generate_fact_data_collected()
+    df_research_results = generate_fact_research_results_values()
 
     current_dir = os.path.dirname(os.path.abspath(__file__))
     output_dir = os.path.join(current_dir, "..", "data2", "synthetic")
@@ -547,6 +619,8 @@ if __name__ == "__main__":
     # print(df_disease_profiles)
     # df_disease_profiles.to_csv(output_dir + "/dim_disease_profiles.csv", index=False)
 
+    # print(df_research_studies)
+
     ### FACT Tables ###
     # print(df_examinations)
     # df_examinations.to_csv(output_dir + "/fact_examinations.csv", index=False)
@@ -557,3 +631,6 @@ if __name__ == "__main__":
     # df_data_collected.to_csv(output_dir + "/fact_data_collected.csv", index=False)
     # df_data_collected.hist(column="Value", by="Biomarker_ID", figsize=(10, 10))
     # plt.show()
+
+    # print(df_research_results)
+    # df_research_results.to_csv(output_dir + "/fact_research_results.csv", index=False)
