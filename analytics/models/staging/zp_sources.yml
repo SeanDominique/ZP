@@ -1,0 +1,45 @@
+version: 2
+
+# TODO: remove quotations and change column names to all caps
+
+sources:
+  - name: zp
+    database: ZOI_ANALYTICS_DB
+    schema: DEV_SEAN
+    tables:
+      - name: dim_biomarkers
+        columns:
+          - name: "Biomarker_ID"
+            tests:
+              - unique
+              - not_null
+      - name: fact_data_collected
+        columns:
+          - name: "Data_Collected_ID"
+            tests:
+              - unique
+              - not_null
+          - name: "Biomarker_ID"
+            tests:
+              - relationships:
+                  to: source('zp', 'dim_biomarkers')
+                  field: "Biomarker_ID"
+                  severity: warn
+      - name: fact_research_results
+        columns:
+          - name: "Research_Result_ID"
+            tests:
+              - unique
+              - not_null
+      - name: dim_members
+        columns:
+          - name: "Member_ID"
+            tests:
+              - unique
+              - not_null
+      - name: fact_examinations
+        columns:
+          - name: "Examination_ID"
+            tests:
+              - unique
+              - not_null
