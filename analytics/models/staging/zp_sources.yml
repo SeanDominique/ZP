@@ -8,14 +8,64 @@ sources:
     schema: DEV_SEAN
     tables:
       - name: dim_biomarkers
+        description: "Where biomarker values are stored"
         columns:
           - name: "Biomarker_ID"
+            description: "Primary key"
             tests:
               - unique
               - not_null
+
+
+      - name: dim_clinicians
+        columns:
+          - name: CLINICIAN_ID
+            description: "Primary key"
+            tests:
+              - unique
+              - not_null
+          - name: FULL_NAME
+            tests:
+              - not_null
+
+
+      - name: dim_disease_profiles
+        columns:
+          - name: DISEASE_PROFILE_ID
+            tests:
+              - unique
+              - not_null
+          - name: LAST_REVIEWED
+            description: "Last time the disease profile was reviewed for clinical veracity."
+            tests:
+              - not_null
+              - date_format_is_valid
+          - name: NAME
+            tests:
+              - not_null
+
+
+      - name: dim_medical_devices
+        columns:
+          - name: MEDICAL_DEVICE_ID
+            description: "Primary key"
+            tests:
+              - unique
+              - not_null
+          - name: NAME
+            tests:
+              - not_null
+          - name: LAST_SERVICED
+            description: "Most recent date the medical device was checked/serviced."
+            tests:
+              - not_null
+              - date_format_is_valid
+
+
       - name: fact_data_collected
         columns:
           - name: "Data_Collected_ID"
+            description: "Primary key"
             tests:
               - unique
               - not_null
@@ -25,18 +75,24 @@ sources:
                   to: source('zp', 'dim_biomarkers')
                   field: "Biomarker_ID"
                   severity: warn
+
+
       - name: fact_research_results
         columns:
           - name: "Research_Result_ID"
             tests:
               - unique
               - not_null
+
+
       - name: dim_members
         columns:
           - name: "Member_ID"
             tests:
               - unique
               - not_null
+
+
       - name: fact_examinations
         columns:
           - name: "Examination_ID"
