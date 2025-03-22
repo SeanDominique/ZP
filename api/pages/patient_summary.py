@@ -5,12 +5,23 @@ from datetime import datetime
 import os
 
 ########## DATA
-df_members = pd.read_csv("data2/synthetic/dim_members.csv")
-df_examinations = pd.read_csv("data2/synthetic/fact_examinations.csv")
-df_biomarkers = pd.read_csv("data2/synthetic/dim_biomarkers.csv")
-df_data_collected = pd.read_csv("data2/synthetic/fact_data_collected.csv")
-df_clinicians = pd.read_csv("data2/synthetic/dim_clinicians.csv")
-df_research_results = pd.read_csv("data2/synthetic/fact_research_results.csv")
+script_path = os.path.dirname(os.path.abspath(__file__))
+dim_members_path = os.path.join(script_path, "../../data2/synthetic/dim_members.csv")
+dim_clinicians_path = os.path.join(script_path, "../../data2/synthetic/dim_clinicians.csv")
+dim_biomarkers_path = os.path.join(script_path, "../../data2/synthetic/dim_biomarkers.csv")
+fact_exmaniations_path = os.path.join(script_path, "../../data2/synthetic/fact_examinations.csv")
+fact_data_collected_path = os.path.join(script_path, "../../data2/synthetic/fact_data_collected.csv")
+fact_research_results_path = os.path.join(script_path, "../../data2/synthetic/fact_research_results.csv")
+
+print(dim_members_path)
+df_members = pd.read_csv(dim_members_path)
+print(df_members)
+df_examinations = pd.read_csv(fact_exmaniations_path)
+df_biomarkers = pd.read_csv(dim_biomarkers_path)
+df_data_collected = pd.read_csv(fact_data_collected_path)
+df_clinicians = pd.read_csv(dim_clinicians_path)
+# Load research results for biomarker flagging
+df_research_results = pd.read_csv(fact_research_results_path)
 
 df_data = (df_data_collected
     .merge(df_examinations[['Examination_ID', 'Member_ID', 'Examination_Date', "Clinician_ID"]],
@@ -88,7 +99,7 @@ def label_biomarker_range(value, biomarker_id, df_research_results):
         return "orange"
     else:
         return "green"
-
+      
 
 if member_name in df_members["Full_Name"].values:
     member_record = df_data[df_data["Full_Name"] == member_name]
@@ -167,6 +178,8 @@ if member_name in df_members["Full_Name"].values:
                 st.markdown(f"- {bio_name}: {biomarker_values[bio]:.2f} {unit}")
 
     with tab2:
+        # for most recent examination,
+        # show which biomarkers are out of range (green, orange, red)
         # Create a navigation system for biomarker visualization
         st.subheader("Biomarker Visualization")
 
@@ -355,6 +368,3 @@ if member_name in df_members["Full_Name"].values:
 else:
     st.write(f"Patient {member_name} not found")
     st.write("All member data:", df_data)
-
-# for most recent examination,
-# show which biomarkers are out of range (green, orange, red)
