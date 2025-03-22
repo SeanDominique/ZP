@@ -1,0 +1,11 @@
+models:
+  - name: int_flag_categorization
+    columns:
+      - name: Biomarker_ID
+        tests:
+          - unique
+          - not_null
+      - name: Flag
+        tests:
+          - accepted_values:
+              values: [0, 1, 2] # Green, Orange, Red
