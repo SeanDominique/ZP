@@ -5,7 +5,6 @@ from datetime import datetime
 import os
 
 ########## DATA
-
 script_path = os.path.dirname(os.path.abspath(__file__))
 dim_members_path = os.path.join(script_path, "../../data2/synthetic/dim_members.csv")
 dim_clinicians_path = os.path.join(script_path, "../../data2/synthetic/dim_clinicians.csv")
@@ -40,7 +39,6 @@ df_data= df_data.loc[:, ["Examination_Date", "Member_ID", "Full_Name", "Biomarke
 # Preprocessing
 df_data['Examination_Date'] = pd.to_datetime(df_data['Examination_Date'])
 # TODO: turn all names into lowercase to simplify search
-
 
 
 ########## APP
@@ -101,16 +99,21 @@ def label_biomarker_range(value, biomarker_id, df_research_results):
         return "orange"
     else:
         return "green"
+      
 
 if member_name in df_members["Full_Name"].values:
     member_record = df_data[df_data["Full_Name"] == member_name]
 
-    # Get member's most recent examination data
-    if len(member_record) > 1:
-        latest_date = member_record["Examination_Date"].max()
-        member_record = member_record[member_record["Examination_Date"] == latest_date]
-    st.markdown(f"*{member_name}* most recent record: ")
-    st.write(member_record)
+
+    with st.expander("View Member Data"):
+        # Get member's most recent examination data
+        if len(member_record) > 1:
+            latest_date = member_record["Examination_Date"].max()
+            member_record = member_record[member_record["Examination_Date"] == latest_date]
+            st.markdown(f"*{member_name}* most recent record: ")
+            st.write(member_record)
+
+    tab1, tab2, tab3, tab4 = st.tabs(["Patient Biomarker Status Summary", "Biomarker Visualizations", "Disease Risk Predictions", "Therapeutic Recommendations"])
 
     # Create a dictionary to store biomarker flags
     biomarker_flags = {}
@@ -133,13 +136,22 @@ if member_name in df_members["Full_Name"].values:
     # Sort biomarkers by flag priority: red, orange, green, gray
     sorted_biomarkers = red_biomarkers + orange_biomarkers + green_biomarkers + gray_biomarkers
 
-    # Display summary of flagged biomarkers
-    st.subheader("Biomarker Status Summary")
+    with tab1:
+        # Display summary of flagged biomarkers
+        st.subheader("Biomarker Status Summary")
 
-    # Add toggle to show/hide biomarker lists
-    show_biomarker_details = st.toggle("Show detailed biomarker lists", value=True)
+        # Add a detailed explanation of the flagging system
+        with st.expander("About Biomarker Flagging"):
+            st.markdown("""
+            ### Biomarker Flagging System
 
-    if show_biomarker_details:
+            - 🔴 **Red (Critical)**: Values outside the normal range limits. Immediate attention may be required.
+            - 🟠 **Orange (Warning)**: Values close to the boundaries of normal range. Monitor closely.
+            - 🟢 **Green (Normal)**: Values well within the normal range.
+
+            The normal ranges are based on research studies with statistical significance.
+            """)
+
         col1, col2, col3 = st.columns(3)
         with col1:
             st.markdown(f"🔴 **Critical** ({len(red_biomarkers)})")
@@ -164,200 +176,195 @@ if member_name in df_members["Full_Name"].values:
                 bio_name = bio_info["Biomarker_Name"].values[0]
                 unit = bio_info["Unit_Measurement"].values[0]
                 st.markdown(f"- {bio_name}: {biomarker_values[bio]:.2f} {unit}")
-    else:
-        # Show just the counts when details are hidden
-        st.markdown(f"🔴 **Critical**: {len(red_biomarkers)} | 🟠 **Warning**: {len(orange_biomarkers)} | 🟢 **Normal**: {len(green_biomarkers)}")
 
-    # Create a navigation system for biomarker visualization
-    st.subheader("Biomarker Visualization")
+    with tab2:
+        # for most recent examination,
+        # show which biomarkers are out of range (green, orange, red)
+        # Create a navigation system for biomarker visualization
+        st.subheader("Biomarker Visualization")
 
-    # Create columns for the navigation controls
-    col1, col2, col3 = st.columns([1, 10, 1])
+        # Create columns for the navigation controls
+        col1, col2, col3 = st.columns([1, 10, 1])
 
-    # Get the current biomarker index (default to first biomarker)
-    if 'current_biomarker_index' not in st.session_state:
-        st.session_state.current_biomarker_index = 0
+        # Get the current biomarker index (default to first biomarker)
+        if 'current_biomarker_index' not in st.session_state:
+            st.session_state.current_biomarker_index = 0
 
-    # Previous button
-    with col1:
-        if st.button("◀"):
-            st.session_state.current_biomarker_index = (st.session_state.current_biomarker_index - 1) % len(sorted_biomarkers)
-            st.rerun()
+        # Previous button
+        with col1:
+            if st.button("◀"):
+                st.session_state.current_biomarker_index = (st.session_state.current_biomarker_index - 1) % len(sorted_biomarkers)
+                st.rerun()
 
-    # Biomarker selector
-    with col2:
-        # Create a list of biomarker names with their flag status
-        biomarker_options = []
-        for bio_id in sorted_biomarkers:
-            bio_name = df_biomarkers[df_biomarkers["Biomarker_ID"] == bio_id]["Biomarker_Name"].values[0]
-            flag = biomarker_flags[bio_id]
-            # Add emoji based on flag
-            if flag == "red":
-                emoji = "🔴"
-            elif flag == "orange":
-                emoji = "🟠"
-            elif flag == "green":
-                emoji = "🟢"
-            else:
-                emoji = "⚪"
-            biomarker_options.append(f"{emoji} {bio_name}")
+        # Biomarker selector
+        with col2:
+            # Create a list of biomarker names with their flag status
+            biomarker_options = []
+            for bio_id in sorted_biomarkers:
+                bio_name = df_biomarkers[df_biomarkers["Biomarker_ID"] == bio_id]["Biomarker_Name"].values[0]
+                flag = biomarker_flags[bio_id]
+                # Add emoji based on flag
+                if flag == "red":
+                    emoji = "🔴"
+                elif flag == "orange":
+                    emoji = "🟠"
+                elif flag == "green":
+                    emoji = "🟢"
+                else:
+                    emoji = "⚪"
+                biomarker_options.append(f"{emoji} {bio_name}")
 
-        # Create the selector
-        selected_option = st.selectbox(
-            "Select biomarker to visualize:",
-            biomarker_options,
-            index=st.session_state.current_biomarker_index
-        )
+            # Create the selector
+            selected_option = st.selectbox(
+                "Select biomarker to visualize:",
+                biomarker_options,
+                index=st.session_state.current_biomarker_index
+            )
 
-        # Update the current index based on selection
-        st.session_state.current_biomarker_index = biomarker_options.index(selected_option)
+            # Update the current index based on selection
+            st.session_state.current_biomarker_index = biomarker_options.index(selected_option)
 
-    # Next button
-    with col3:
-        if st.button("▶"):
-            st.session_state.current_biomarker_index = (st.session_state.current_biomarker_index + 1) % len(sorted_biomarkers)
-            st.rerun()
+        # Next button
+        with col3:
+            if st.button("▶"):
+                st.session_state.current_biomarker_index = (st.session_state.current_biomarker_index + 1) % len(sorted_biomarkers)
+                st.rerun()
 
-    # Get the currently selected biomarker
-    current_biomarker_id = sorted_biomarkers[st.session_state.current_biomarker_index]
-    current_biomarker_name = df_biomarkers[df_biomarkers["Biomarker_ID"] == current_biomarker_id]["Biomarker_Name"].values[0]
-    current_biomarker_unit = df_biomarkers[df_biomarkers["Biomarker_ID"] == current_biomarker_id]["Unit_Measurement"].values[0]
-    current_flag = biomarker_flags[current_biomarker_id]
+        # Get the currently selected biomarker
+        current_biomarker_id = sorted_biomarkers[st.session_state.current_biomarker_index]
+        current_biomarker_name = df_biomarkers[df_biomarkers["Biomarker_ID"] == current_biomarker_id]["Biomarker_Name"].values[0]
+        current_biomarker_unit = df_biomarkers[df_biomarkers["Biomarker_ID"] == current_biomarker_id]["Unit_Measurement"].values[0]
+        current_flag = biomarker_flags[current_biomarker_id]
 
-    # Create visualization for the selected biomarker
-    fig = go.Figure()
+        # Create visualization for the selected biomarker
+        fig = go.Figure()
 
-    # Get data for the current biomarker
-    biomarker_data = df_data[df_data["Biomarker_ID"] == current_biomarker_id]
+        # Get data for the current biomarker
+        biomarker_data = df_data[df_data["Biomarker_ID"] == current_biomarker_id]
 
-    # Add boxplot for all members
-    fig.add_trace(go.Box(
-        y=biomarker_data["Value"],
-        name=current_biomarker_name,
-        boxpoints='outliers',
-        marker_color='lightgray',
-        line_color='darkgray'
-    ))
-
-    # Add the member's value with appropriate color
-    member_value = member_record.loc[member_record["Biomarker_ID"] == current_biomarker_id, "Value"].values
-    if len(member_value) > 0:
-        # Map flag colors to actual colors for the plot
-        color_map = {"red": "red", "orange": "orange", "green": "green", "gray": "gray"}
-
-        fig.add_trace(go.Scatter(
-            x=[current_biomarker_name],
-            y=[member_value[0]],
-            mode='markers',
-            name=f'{member_name}',
-            marker=dict(size=15, color=color_map[current_flag], line=dict(width=2, color='black')),
-            showlegend=True
+        # Add boxplot for all members
+        fig.add_trace(go.Box(
+            y=biomarker_data["Value"],
+            name=current_biomarker_name,
+            boxpoints='outliers',
+            marker_color='lightgray',
+            line_color='darkgray'
         ))
 
-    # Get research results for reference lines
-    biomarker_research = df_research_results[df_research_results["Biomarker_ID"] == current_biomarker_id]
-    if len(biomarker_research) > 0:
-        upper_limit = biomarker_research["Upper_Limit"].values[0]
-        lower_limit = biomarker_research["Lower_Limit"].values[0]
+        # Add the member's value with appropriate color
+        member_value = member_record.loc[member_record["Biomarker_ID"] == current_biomarker_id, "Value"].values
+        if len(member_value) > 0:
+            # Map flag colors to actual colors for the plot
+            color_map = {"red": "red", "orange": "orange", "green": "green", "gray": "gray"}
 
-        # Add reference lines for upper and lower limits
-        fig.add_shape(
-            type="line",
-            x0=-0.5, x1=0.5,
-            y0=upper_limit, y1=upper_limit,
-            line=dict(color="red", width=2, dash="dash"),
-        )
+            fig.add_trace(go.Scatter(
+                x=[current_biomarker_name],
+                y=[member_value[0]],
+                mode='markers',
+                name=f'{member_name}',
+                marker=dict(size=15, color=color_map[current_flag], line=dict(width=2, color='black')),
+                showlegend=True
+            ))
 
-        fig.add_shape(
-            type="line",
-            x0=-0.5, x1=0.5,
-            y0=lower_limit, y1=lower_limit,
-            line=dict(color="red", width=2, dash="dash"),
-        )
-
-        # Add annotations for the limits
-        fig.add_annotation(
-            x=0.5, y=upper_limit,
-            text=f"Upper Limit: {upper_limit:.2f}",
-            showarrow=False,
-            xanchor="left",
-            yanchor="bottom"
-        )
-
-        fig.add_annotation(
-            x=0.5, y=lower_limit,
-            text=f"Lower Limit: {lower_limit:.2f}",
-            showarrow=False,
-            xanchor="left",
-            yanchor="top"
-        )
-
-    # Update layout
-    fig.update_layout(
-        title=f"{current_biomarker_name} ({current_biomarker_unit})",
-        yaxis_title=f"Value ({current_biomarker_unit})",
-        height=500,
-        margin=dict(l=20, r=20, t=50, b=20),
-        xaxis=dict(
-            tickmode='array',
-            tickvals=[],
-            ticktext=[]
-        )
-    )
-
-    st.plotly_chart(fig, use_container_width=True)
-
-    # Display additional information about the selected biomarker
-    st.markdown(f"### {current_biomarker_name} Details")
-
-    # Create columns for the details
-    col1, col2, col3 = st.columns(3)
-
-    with col1:
-        st.metric(
-            label=f"Current Value ({current_biomarker_unit})",
-            value=f"{member_value[0]:.2f}" if len(member_value) > 0 else "N/A"
-        )
-
-    with col2:
+        # Get research results for reference lines
+        biomarker_research = df_research_results[df_research_results["Biomarker_ID"] == current_biomarker_id]
         if len(biomarker_research) > 0:
-            st.metric(
-                label="Normal Range",
-                value=f"{lower_limit:.2f} - {upper_limit:.2f} {current_biomarker_unit}"
-            )
-        else:
-            st.metric(
-                label="Normal Range",
-                value="No data available"
+            upper_limit = biomarker_research["Upper_Limit"].values[0]
+            lower_limit = biomarker_research["Lower_Limit"].values[0]
+
+            # Add reference lines for upper and lower limits
+            fig.add_shape(
+                type="line",
+                x0=-0.5, x1=0.5,
+                y0=upper_limit, y1=upper_limit,
+                line=dict(color="red", width=2, dash="dash"),
             )
 
-    with col3:
-        # Display status with appropriate emoji
-        if current_flag == "red":
-            status = "🔴 Critical"
-        elif current_flag == "orange":
-            status = "🟠 Warning"
-        elif current_flag == "green":
-            status = "🟢 Normal"
-        else:
-            status = "⚪ Unknown"
+            fig.add_shape(
+                type="line",
+                x0=-0.5, x1=0.5,
+                y0=lower_limit, y1=lower_limit,
+                line=dict(color="red", width=2, dash="dash"),
+            )
 
-        st.metric(
-            label="Status",
-            value=status
+            # Add annotations for the limits
+            fig.add_annotation(
+                x=0.5, y=upper_limit,
+                text=f"Upper Limit: {upper_limit:.2f}",
+                showarrow=False,
+                xanchor="left",
+                yanchor="bottom"
+            )
+
+            fig.add_annotation(
+                x=0.5, y=lower_limit,
+                text=f"Lower Limit: {lower_limit:.2f}",
+                showarrow=False,
+                xanchor="left",
+                yanchor="top"
+            )
+
+        # Update layout
+        fig.update_layout(
+            title=f"{current_biomarker_name} ({current_biomarker_unit})",
+            yaxis_title=f"Value ({current_biomarker_unit})",
+            height=500,
+            margin=dict(l=20, r=20, t=50, b=20),
+            xaxis=dict(
+                tickmode='array',
+                tickvals=[],
+                ticktext=[]
+            )
         )
 
-    # Add a detailed explanation of the flagging system
-    with st.expander("About Biomarker Flagging"):
-        st.markdown("""
-        ### Biomarker Flagging System
+        st.plotly_chart(fig, use_container_width=True)
 
-        - 🔴 **Red (Critical)**: Values outside the normal range limits. Immediate attention may be required.
-        - 🟠 **Orange (Warning)**: Values close to the boundaries of normal range. Monitor closely.
-        - 🟢 **Green (Normal)**: Values well within the normal range.
+        # Display additional information about the selected biomarker
+        st.markdown(f"### {current_biomarker_name} Details")
 
-        The normal ranges are based on research studies with statistical significance.
-        """)
+        # Create columns for the details
+        col1, col2, col3 = st.columns(3)
+
+        with col1:
+            st.metric(
+                label=f"Current Value ({current_biomarker_unit})",
+                value=f"{member_value[0]:.2f}" if len(member_value) > 0 else "N/A"
+            )
+
+        with col2:
+            if len(biomarker_research) > 0:
+                st.metric(
+                    label="Normal Range",
+                    value=f"{lower_limit:.2f} - {upper_limit:.2f} {current_biomarker_unit}"
+                )
+            else:
+                st.metric(
+                    label="Normal Range",
+                    value="No data available"
+                )
+
+        with col3:
+            # Display status with appropriate emoji
+            if current_flag == "red":
+                status = "🔴 Critical"
+            elif current_flag == "orange":
+                status = "🟠 Warning"
+            elif current_flag == "green":
+                status = "🟢 Normal"
+            else:
+                status = "⚪ Unknown"
+
+            st.metric(
+                label="Status",
+                value=status
+            )
+
+    with tab3:
+        st.write("Feature coming soon")
+
+    with tab4:
+        st.write("Feature coming soon")
+
 else:
     st.write(f"Patient {member_name} not found")
     st.write("All member data:", df_data)
