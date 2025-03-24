@@ -1,0 +1,33 @@
+version: 1.0
+
+models:
+  - name: int_flag_categorization
+    columns:
+      - name: Biomarker_ID
+        tests:
+          - unique
+          - not_null
+      - name: Flag
+        tests:
+          - accepted_values:
+              values: [0, 1, 2] # Green, Orange, Red
+
+  - name: mart_patient_summary
+    columns:
+      - name: Member_ID
+        tests:
+          - unique
+          - not_null
+      - name: Total_Examinations
+        tests:
+          - not_null
+
+  - name: mart_biomarker_dashboard
+    columns:
+      - name: Biomarker_ID
+        tests:
+          - unique
+          - not_null
+      - name: Measurement_Count
+        tests:
+          - not_null

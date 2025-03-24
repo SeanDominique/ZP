@@ -1,4 +1,4 @@
-version: 2
+version: 2.0
 
 # TODO: remove quotations and change column names to all caps
 
@@ -26,6 +26,7 @@ sources:
           - name: FULL_NAME
             tests:
               - not_null
+              - string_is_not_empty
 
       - name: dim_disease_profiles
         columns:
@@ -41,6 +42,7 @@ sources:
           - name: NAME
             tests:
               - not_null
+              - string_is_not_empty
 
       - name: dim_medical_devices
         columns:
@@ -52,11 +54,18 @@ sources:
           - name: NAME
             tests:
               - not_null
-          - name: LAST_SERVICED
+              - string_is_not_empty
+          - name: LAST_SERVICED_DATE
             description: "Most recent date the medical device was checked/serviced."
             tests:
               - not_null
               - date_format_is_valid
+          - name: PURCHASED_DATE
+            description: "When the medical device was purchased."
+            tests:
+              - not_null
+              - date_format_is_valid
+
 
       - name: dim_members
         description: "Patient/member information"
@@ -69,6 +78,7 @@ sources:
           - name: Full_Name
             tests:
               - not_null
+              - string_is_not_empty
           - name: Date_Registered
             tests:
               - not_null
@@ -86,6 +96,7 @@ sources:
             description: "Link to the research paper or study"
             tests:
               - not_null
+              - string_is_not_empty
 
       - name: fact_data_collected
         description: "Biomarker measurements collected during examinations"

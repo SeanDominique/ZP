@@ -8,3 +8,7 @@ data_tests:
   - name: stg_zp_fct_examinations_date_valid
     description: >
       Ensures the examination date is after the first ever examination at Zoi and before today's date.
+
+  - name: stg_zp_dim_disease_profiles_date_valid
+    description: >
+      Ensures that disease profiles have been reviewed within a reasonable timeframe (3 years atm).

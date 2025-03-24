@@ -1,15 +1,19 @@
-select
-  DIM_MEMBERS."Full_Name",
-  DIM_BIOMARKERS."Biomarker_ID",
-  FACT_EXAMINATIONS."Date",
-  FACT_DATA_COLLECTED."Value",
-  DIM_MEMBERS."Member_ID",
-  FACT_EXAMINATIONS."Examination_ID"
-from {{ref('stg_zp_fct_data_collected')}} as FCT_DATA_COLLECTED
-inner join {{ref('stg_zp_dim_biomarkers')}} as DIM_BIOMARKERS
-  on FCT_DATA_COLLECTED."Biomarker_ID" = DIM_BIOMARKERS."Biomarker_ID"
-inner join {{ref('stg_zp_fct_examinations')}} as FCT_EXAMINATIONS
-  on FCT_DATA_COLLECTED."Examination_ID" = FCT_EXAMINATIONS."Examination_ID"
-inner join {{ref('stg_zp_dim_members')}} as DIM_MEMBERS
-  on FACT_EXAMINATIONS."Member_ID" = DIM_MEMBERS."Member_ID"
-order by FCT_EXAMINATIONS."Date" DESC, DIM_MEMBERS."Full_Name" ASC
+-- all member biomarker values ordered by examination date (DESC) and member name (ASC)
+SELECT
+  MEMBERS.Full_Name,
+  BIOMARKERS.Biomarker_ID,
+  BIOMARKERS.Biomarker_Name,
+  BIOMARKERS.Unit_Measurement,
+  EXAMINATIONS.Examination_Date,
+  DATA_COLLECTED.Value,
+  MEMBERS.Member_ID,
+  EXAMINATIONS.Examination_ID,
+  EXAMINATIONS.CLINICIAN_ID
+FROM {{ref('stg_zp_fct_data_collected')}} AS DATA_COLLECTED
+INNER JOIN {{ref('stg_zp_dim_biomarkers')}} AS BIOMARKERS
+  ON DATA_COLLECTED.Biomarker_ID = BIOMARKERS.Biomarker_ID
+INNER JOIN {{ref('stg_zp_fct_examinations')}} AS EXAMINATIONS
+  ON DATA_COLLECTED.Examination_ID = EXAMINATIONS.Examination_ID
+INNER JOIN {{ref('stg_zp_dim_members')}} AS MEMBERS
+  ON EXAMINATIONS.Member_ID = MEMBERS.Member_ID
+ORDER BY EXAMINATIONS.Date DESC, MEMBERS.Full_Name ASC
