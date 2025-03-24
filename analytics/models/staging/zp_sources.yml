@@ -10,12 +10,11 @@ sources:
       - name: dim_biomarkers
         description: "Where biomarker values are stored"
         columns:
-          - name: "Biomarker_ID"
+          - name: Biomarker_ID
             description: "Primary key"
             tests:
               - unique
               - not_null
-
 
       - name: dim_clinicians
         columns:
@@ -27,7 +26,6 @@ sources:
           - name: FULL_NAME
             tests:
               - not_null
-
 
       - name: dim_disease_profiles
         columns:
@@ -43,7 +41,6 @@ sources:
           - name: NAME
             tests:
               - not_null
-
 
       - name: dim_medical_devices
         columns:
@@ -61,41 +58,90 @@ sources:
               - not_null
               - date_format_is_valid
 
-
-      - name: fact_data_collected
+      - name: dim_members
+        description: "Patient/member information"
         columns:
-          - name: "Data_Collected_ID"
+          - name: Member_ID
             description: "Primary key"
             tests:
               - unique
               - not_null
-          - name: "Biomarker_ID"
+          - name: Full_Name
+            tests:
+              - not_null
+          - name: Date_Registered
+            tests:
+              - not_null
+              - date_format_is_valid
+
+      - name: dim_research_studies
+        description: "Research studies and their metadata"
+        columns:
+          - name: Research_Study_ID
+            description: "Primary key"
+            tests:
+              - unique
+              - not_null
+          - name: URI
+            description: "Link to the research paper or study"
+            tests:
+              - not_null
+
+      - name: fact_data_collected
+        description: "Biomarker measurements collected during examinations"
+        columns:
+          - name: Data_Collected_ID
+            description: "Primary key"
+            tests:
+              - unique
+              - not_null
+          - name: Biomarker_ID
             tests:
               - relationships:
                   to: source('zp', 'dim_biomarkers')
-                  field: "Biomarker_ID"
+                  field: Biomarker_ID
                   severity: warn
-
-
-      - name: fact_research_results
-        columns:
-          - name: "Research_Result_ID"
+          - name: Value
+            description: "Measured biomarker value"
             tests:
-              - unique
               - not_null
-
-
-      - name: dim_members
-        columns:
-          - name: "Member_ID"
-            tests:
-              - unique
-              - not_null
-
 
       - name: fact_examinations
+        description: "Patient examination records"
         columns:
-          - name: "Examination_ID"
+          - name: Examination_ID
+            description: "Primary key"
             tests:
               - unique
+              - not_null
+          - name: Member_ID
+            tests:
+              - relationships:
+                  to: source('zp', 'dim_members')
+                  field: Member_ID
+          - name: Examination_Date
+            tests:
+              - not_null
+              - date_format_is_valid
+
+      - name: fact_research_results
+        description: "Results from research studies with statistical boundaries"
+        columns:
+          - name: Research_Result_ID
+            description: "Primary key"
+            tests:
+              - unique
+              - not_null
+          - name: Biomarker_ID
+            tests:
+              - relationships:
+                  to: source('zp', 'dim_biomarkers')
+                  field: Biomarker_ID
+          - name: Upper_Limit
+            description: "Upper statistical boundary for normal range"
+            tests:
+              - not_null
+          - name: Lower_Limit
+            description: "Lower statistical boundary for normal range"
+            tests:
               - not_null
