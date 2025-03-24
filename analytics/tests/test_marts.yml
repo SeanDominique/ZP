@@ -1,0 +1,10 @@
+version: 1.0
+
+data_tests:
+  - name: stg_fct_data_collected_in_statistical_range
+    description: >
+      Ensures that biomarker values in FCT_Data_Collected table are within reasonable range based on values found in FCT_Research_Results table
+
+  - name: stg_zp_fct_examinations_date_valid
+    description: >
+      Ensures the examination date is after the first ever examination at Zoi and before today's date.
